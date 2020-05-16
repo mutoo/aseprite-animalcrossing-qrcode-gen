@@ -2,6 +2,8 @@
 
 This is a custom script for generate Animal Crossing QRCode in [Aseprite](http://www.aseprite.org/).
 
+Tested on aesprite v1.2.18.
+
 ## Install
 
 1. Download the repo as Zip file.
@@ -46,7 +48,7 @@ Currently, the generator only support the basic 32 x 32 custom design. More desi
 
 The palette is limit to 16 colors with transparent, and when being exported to qrcode, it would be converted to the closest colors in the internal palette (check `lib/palettes.lua` for reference).
 
-The design will not be editable on both Animal Crossing New Leaf or Animal Crossing New Horizons due to the lack of user identification in the data.
+N.B. The design will not be editable on both Animal Crossing New Leaf or Animal Crossing New Horizons due to the lack of user identification in the data.
 
 ## License
 
@@ -57,4 +59,4 @@ MIT
 Thanks [Thulinma](https://github.com/Thulinma/) for creating the [ACNLPatternTool Web App](https://acpatterns.com/).
 The ACNL data layout and palettes are extracted from that repo and ported to Lua language.
 
-Thanks Patrick Gundlach for create the [luaqrcode](http://speedata.github.io/luaqrcode/docs/qrencode.html).
+Thanks Patrick Gundlach for creating the [luaqrcode](http://speedata.github.io/luaqrcode/docs/qrencode.html).

@@ -192,8 +192,6 @@ if inputs.generateBtn then
     for i = 0, c, 2 do
         push(data, pixels[i] + pixels[i + 1] * 16)
     end
-    for i = 1, #data do
-    end
 
     -- qr encode
     local bitstr = ""
