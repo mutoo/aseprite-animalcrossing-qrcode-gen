@@ -73,8 +73,8 @@ dlg:modify(
 dlg:check(
     {
         id = "sizeOfPalette",
-        label = "Palette size",
-        text = "not greater than 16",
+        label = "Palette Size",
+        text = "is NOT greater than 16",
         selected = isSuitablePalette
     }
 )
@@ -86,7 +86,7 @@ dlg:modify(
     }
 )
 
-dlg:separator({text = "Meta"})
+dlg:separator({text = "Metas"})
 
 dlg:entry({id = "title", label = "Title", text = settings.title or "Untitled"})
 dlg:entry({id = "author", label = "Author", text = settings.author or "Unknown"})
@@ -143,7 +143,7 @@ if inputs.generateBtn then
     -- QR codes are blocks of 540 bytes each, providing this data in sequence:
     --
     -- 0x 00 - 0x 29 ( 42) = Pattern Title
-    push(data, padding(42, utf16(inputs.title:byte(1, 21))))
+    push(data, padding(42, utf16(inputs.title:byte(1, 20))))
     -- 0x 2A - 0x 2B (  2) = User ID
     push(data, 182, 236) -- 0xecb6
     -- -- 0x 2C - 0x 3F ( 20) = User Name
