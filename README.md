@@ -22,6 +22,9 @@ P.S. the `lib` folder is a necessary part of this script, so please leave it wit
 7. Click `Generate` button to create a new sprite with QRCode.
 8. Scan the QRCode with Nintendo Switch mobile app.
 
+![screenshot-1](./screenshot/qrcode-1.png)
+![screenshot-2](./screenshot/qrcode-2.png)
+
 ### User Preference
 
 Aseprite doesn't support user preference at the moment this script had been made. 
