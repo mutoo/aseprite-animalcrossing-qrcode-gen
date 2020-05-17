@@ -2,7 +2,7 @@
 
 This is a custom script for generate Animal Crossing QRCode in [Aseprite](http://www.aseprite.org/).
 
-Tested on aesprite v1.2.18.
+Tested on aseprite v1.2.18.
 
 ## Install
 
@@ -12,6 +12,8 @@ Tested on aesprite v1.2.18.
 4. Restart Aseprite.
 
 P.S. the `lib` folder is a necessary part of this script, so please leave it with `generate-qrcode.lua`.
+
+You can also attach a shortcut to this script, more instruction can be found at [this post](https://community.aseprite.org/t/aseprite-scripts-collection/3599).
 
 ## Usage
 
