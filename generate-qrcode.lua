@@ -145,11 +145,11 @@ if inputs.generateBtn then
     -- 0x 00 - 0x 29 ( 42) = Pattern Title
     push(data, padding(42, utf16(inputs.title:byte(1, 20))))
     -- 0x 2A - 0x 2B (  2) = User ID
-    push(data, 182, 236) -- 0xecb6
+    push(data, 173, 222) -- 0xdead
     -- -- 0x 2C - 0x 3F ( 20) = User Name
     push(data, padding(20, utf16(inputs.author:byte(1, 9))))
     -- -- 0x 40 - 0x 41 (  2) = Town ID
-    push(data, 68, 197) -- 0xc544
+    push(data, 239, 190) -- 0xbeef
     -- -- 0x 42 - 0x 55 ( 20) = Town Name
     push(data, padding(20, utf16(inputs.town:byte(1, 9))))
     -- -- 0x 56 - 0x 57 (  2) = Unknown A (values are usually random - changing seems to have no effect)
