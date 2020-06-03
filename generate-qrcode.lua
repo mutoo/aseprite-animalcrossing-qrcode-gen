@@ -9,11 +9,10 @@
 
 dofile("./lib/palettes.lua")
 dofile("./lib/helper.lua")
-local qrencode = dofile("./lib/qrencode.lua")
 
 -- try to load settings file for user data
 local settings = {}
-pcall(function ()
+pcall(function()
     settings = dofile('./settings.lua')
 end)
 
@@ -31,93 +30,101 @@ end
 
 local isIndexMode = spr.colorMode == ColorMode.INDEXED
 local palette = spr.palettes[1]
-local isRightSize = spr.width == 32 and spr.height == 32
+local isRightSize = (spr.width == 32 and spr.height == 32) or (spr.width == 64 and spr.height == 64)
 local isSuitablePalette = #palette <= 16
 
 local dlg = Dialog("Animal Crossing QRCode Generator")
 
-dlg:separator({text = "Check List"})
+dlg:separator({ text = "Check List" })
 
-dlg:check(
-    {
-        id = "size",
-        label = "Sprite Size",
-        text = "is 32x32",
-        selected = isRightSize
-    }
-)
+dlg:check({
+    id = "size",
+    label = "Sprite Size",
+    text = "is 32x32 or 64x64",
+    selected = isRightSize
+})
 
-dlg:modify(
-    {
-        id = "size",
-        enabled = false
-    }
-)
+dlg:modify({ id = "size", enabled = false })
 
-dlg:check(
-    {
-        id = "colorMode",
-        label = "Color Mode",
-        text = "is Indexed",
-        selected = isIndexMode
-    }
-)
+dlg:check({
+    id = "colorMode",
+    label = "Color Mode",
+    text = "is Indexed",
+    selected = isIndexMode
+})
 
-dlg:modify(
-    {
-        id = "colorMode",
-        enabled = false
-    }
-)
+dlg:modify({ id = "colorMode", enabled = false })
 
-dlg:check(
-    {
-        id = "sizeOfPalette",
-        label = "Palette Size",
-        text = "is NOT greater than 16",
-        selected = isSuitablePalette
-    }
-)
+dlg:check({
+    id = "sizeOfPalette",
+    label = "Palette Size",
+    text = "is NOT greater than 16",
+    selected = isSuitablePalette
+})
 
-dlg:modify(
-    {
-        id = "sizeOfPalette",
-        enabled = false
-    }
-)
+dlg:modify({ id = "sizeOfPalette", enabled = false })
 
-dlg:separator({text = "Metas"})
+dlg:separator({ text = "Metas" })
 
-dlg:entry({id = "title", label = "Title", text = settings.title or "Untitled"})
-dlg:entry({id = "author", label = "Author", text = settings.author or "Unknown"})
-dlg:entry({id = "town", label = "Town", text = settings.town or "Aseprite"})
+dlg:entry({
+    id = "title",
+    label = "Title",
+    text = settings.title or "Untitled"
+})
+dlg:entry({
+    id = "author",
+    label = "Author",
+    text = settings.author or "Unknown"
+})
+dlg:entry({
+    id = "town",
+    label = "Town",
+    text = settings.town or "Aseprite"
+})
 
-dlg:radio({ id = 'paint', label = 'Type', text = 'Paint', selected = true})
-dlg:radio({ id = 'cap', text = 'Knit Cap'})
-dlg:radio({ id = 'hornedHat', text = 'Horned Hat'})
+dlg:separator({ text = "Type" })
 
-dlg:separator({text = "Action"})
+if spr.width == 32 then
+    dlg:radio({
+        id = 'paint',
+        label = 'Basic',
+        text = 'Paint',
+        selected = true
+    })
+    dlg:radio({
+        id = 'cap',
+        text = 'Knit Cap'
+    })
+    dlg:radio({
+        id = 'hornedHat',
+        text = 'Horned Hat'
+    })
+else
+    dlg:radio({ id = 'shirt', label = 'Pro', text = 'Shirt', selected = true })
+    dlg:radio({ id = 'dress', text = 'Dress' })
+    dlg:radio({ id = 'sleeveless', label = 'Sleeves', text = 'None', selected = true })
+    dlg:radio({ id = 'short', text = 'Short' })
+    dlg:radio({ id = 'long', text = 'Long' })
+end
 
-dlg:button(
-    {
-        id = "generateBtn",
-        text = "&Generate"
-    }
-)
+dlg:separator({ text = "Action" })
 
-dlg:modify(
-    {
-        id = "generateBtn",
-        enabled = isIndexMode and isRightSize and isSuitablePalette
-    }
-)
+dlg:button({
+    id = "generateBtn",
+    text = "&Generate"
+})
+
+dlg:modify({
+    id = "generateBtn",
+    enabled = isIndexMode and isRightSize and isSuitablePalette
+})
 
 dlg:show()
 
 local inputs = dlg.data
 if inputs.generateBtn then
     -- merge layers, this will be undo later
-    app.command.FlattenLayers({visibleOnly = true})
+    app.command.FlattenLayers({ visibleOnly = true })
     -- analytic image
     local cel = app.activeCel
     local img = cel.image
@@ -163,7 +170,7 @@ if inputs.generateBtn then
     for i = 0, #palette - 1 do
         if i ~= alpha then
             local c = palette:getColor(i)
-            local idx = RGBToPaletteIdx({c.red, c.green, c.blue})
+            local idx = RGBToPaletteIdx({ c.red, c.green, c.blue })
             table.insert(paletteIdxes, idx - 1)
         end
     end
@@ -184,16 +191,27 @@ if inputs.generateBtn then
     --  0x07 = Knit Cap
     --  0x08 = Standee (pro)
     --  0x09 = Plain pattern (easel)
-    -- currently we only support the 32x32 type
-    if inputs.paint then
-        push(data, 9) -- Plain pattern (easel)
+    local type = 9 -- default type
+    if inputs.dress then
+        type = 0
+    elseif inputs.shirt then
+        type = 3
     end
-    if inputs.cap then
-        push(data, 7) -- Knit Cap
+    if inputs.long then
+        type = type + 0 -- Fullsleeve
+    elseif inputs.short then
+        type = type + 1 -- Halfsleeve
+    elseif inputs.sleeveless then
+        type = type + 2 -- Sleeveless
     end
     if inputs.hornedHat then
-        push(data, 6) -- Horned Hat
+        type = 6 -- Plain pattern (easel)
+    elseif inputs.cap then
+        type = 7 -- Knit Cap
+    elseif inputs.paint then
+        type = 9 -- Horned Hat
     end
+    push(data, type)
     -- 0x 6A - 0x 6B (  2) = Unknown D (seems to always be 0x0000)
     push(data, 0, 0)
     -- 0x 6C - 0x26B (512) = Pattern Data 1 (mandatory)
@@ -202,8 +220,20 @@ if inputs.generateBtn then
     -- 0x66C - 0x86B (512) = Pattern Data 4 (optional)
     -- 0x86C - 0x86F (  4) = Zero padding (optional)
     --
-    for i = 0, c, 2 do
-        push(data, pixels[i] + pixels[i + 1] * 16)
+    if spr.width == 32 then
+        push(data, getDataBlock(pixels, spr.width, 0, 0, 32, 32)) -- full
+    else
+        push(data, getDataBlock(pixels, spr.width, 32, 0, 32, 32)) -- front up
+        push(data, getDataBlock(pixels, spr.width, 0, 0, 32, 32)) -- back up
+        push(data, getDataBlock(pixels, spr.width, 0, 48, 32, 16)) -- right sleeve
+        push(data, getDataBlock(pixels, spr.width, 32, 48, 32, 16)) -- left sleeve
+        push(data, getDataBlock(pixels, spr.width, 32, 32, 32, 16)) -- front bottom
+        push(data, getDataBlock(pixels, spr.width, 0, 32, 32, 16)) -- back bottom
+    end
+
+    local dataLen = #data
+    if dataLen > 620 and dataLen < 2160 then
+        push(data, padding(2160 - dataLen))
     end
 
     -- qr encode
@@ -211,42 +241,55 @@ if inputs.generateBtn then
     for i, v in ipairs(data) do
         bitstr = bitstr .. string.char(v)
     end
-    local ok, ret = qrencode.qrcode(bitstr, 2)
-    if not ok then
-        return app.alert(ret)
+
+    local qrcodes = {}
+    if spr.width == 32 then
+        table.insert(qrcodes, getQRcodeMatrix(bitstr))
+    else
+        local id = math.random(0, 255)
+        table.insert(qrcodes, getQRcodeMatrix(string.sub(bitstr, 1, 540), { 0, 3, id, type = 11 }))
+        table.insert(qrcodes, getQRcodeMatrix(string.sub(bitstr, 541, 1080), { 1, 3, id, type = 11 }))
+        table.insert(qrcodes, getQRcodeMatrix(string.sub(bitstr, 1081, 1620), { 2, 3, id, type = 11 }))
+        table.insert(qrcodes, getQRcodeMatrix(string.sub(bitstr, 1621, 2160), { 3, 3, id, type = 11 }))
     end
 
     -- create qrcode sprite
-    local qrPadding = 1
-    local qrWidth = #ret
-    local qrSpr = Sprite(qrWidth + 2, qrWidth + 2, ColorMode.RGB)
+    local numOfQRCodes = #qrcodes
+    local qrPadding = 2
+    local qrWidth = #qrcodes[1]
+    local qrSqrWidth = qrWidth + qrPadding * 2
+    local qrSqrHeight = qrWidth * numOfQRCodes + qrPadding * (numOfQRCodes + 1)
+    local qrSpr = Sprite(qrSqrWidth, qrSqrHeight, ColorMode.RGB)
     local qrPalette = qrSpr.palettes[1]
     qrPalette:resize(1) -- clear the palette
     local qrCel = app.activeCel
     local qrImg = qrCel.image
-    local black = Color({r = 0, g = 0, b = 0, a = 255})
-    local white = Color({r = 255, g = 255, b = 255, a = 255})
-    local red = Color({r = 255, g = 0, b = 0, a = 255})
+    local black = Color({ r = 0, g = 0, b = 0, a = 255 })
+    local white = Color({ r = 255, g = 255, b = 255, a = 255 })
+    local red = Color({ r = 255, g = 0, b = 0, a = 255 })
+    qrImg:clear(white)
 
     -- render the qrcode
-    for r = 0, qrWidth + 1 do
-        for c = 0, qrWidth + 1 do
-            local color = red
-            -- border
-            if c == 0 or c == qrWidth + 1 or r == 0 or r == qrWidth + 1 then
-                color = white
-            else
-                local v = ret[c][r]
+    for q = 1, numOfQRCodes do
+        local offsetX = qrPadding
+        local offsetY = qrPadding
+        offsetY = offsetY + (qrWidth + qrPadding) * (q - 1)
+        local qrcode = qrcodes[q]
+        for r = 1, qrWidth do
+            for c = 1, qrWidth do
+                local color = red
+                local v = qrcode[c][r]
                 if v < 0 then
                     color = white
                 elseif v > 0 then
                     color = black
                 end
-            end
 
-            qrImg:drawPixel(c, r, color)
+                qrImg:drawPixel(offsetX + c - 1, offsetY + r - 1, color)
+            end
         end
     end
+
 
     -- done
     app.refresh()

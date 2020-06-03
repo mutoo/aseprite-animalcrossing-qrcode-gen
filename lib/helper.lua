@@ -1,3 +1,5 @@
+local qrencode = dofile("./qrencode.lua")
+
 -- insert multi values into table
 function push(t, ...)
     for i, v in ipairs({...}) do
@@ -37,4 +39,23 @@ function utf16(...)
         table.insert(ret, 0)
     end
     return table.unpack(ret)
+end
+
+-- extract data block from pixels
+function getDataBlock(pixels, cols, x, y, w, h)
+    local data = {}
+    for r = 0, h - 1 do
+        for c = 0, w - 1, 2 do
+            local i = (y + r) * cols + (x + c)
+            table.insert(data, pixels[i] + pixels[i + 1] * 16)
+        end
+    end
+    return table.unpack(data)
+end
+
+-- generate qrcode matrix
+function getQRcodeMatrix(bitstr, hint)
+    local ok, ret = qrencode.qrcode(bitstr, 2, 4, hint)
+    assert(ok, ret)
+    return ret
 end

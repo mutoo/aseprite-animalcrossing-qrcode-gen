@@ -300,11 +300,13 @@ end
 --- If the `requested_ec_level` or the `mode` are provided, this will be used if possible.
 --- The mode depends on the characters used in the string `str`. It seems to be
 --- possible to split the QR code to handle multiple modes, but we don't do that.
-local function get_version_eclevel_mode_bistringlength(str,requested_ec_level,mode)
+--- hint {...data, type=n} n:11 - STRUCTURED_APPEND
+local function get_version_eclevel_mode_bistringlength(str,requested_ec_level,mode,hint)
 	local local_mode
 	if mode then
-		assert(false,"not implemented")
+	    local_mode = get_mode(str)
 		-- check if the mode is OK for the string
+		assert(local_mode<=mode, "invalid mode")
 		local_mode = mode
 	else
 		local_mode = get_mode(str)
@@ -312,7 +314,15 @@ local function get_version_eclevel_mode_bistringlength(str,requested_ec_level,mo
 	local version, ec_level
 	version, ec_level = get_version_eclevel(#str,local_mode,requested_ec_level)
 	local length_string = get_length(str,version,local_mode)
-	return version,ec_level,binary(local_mode,4),local_mode,length_string
+	local data_raw = ''
+	if hint and hint.type == 11 then
+    	data_raw = data_raw .. binary(3, 4) -- structured extend
+	    data_raw = data_raw .. binary(hint[1], 4)
+	    data_raw = data_raw .. binary(hint[2], 4)
+	    data_raw = data_raw .. binary(hint[3], 8)
+	end
+	data_raw = data_raw .. binary(local_mode,4)
+	return version,ec_level,data_raw,local_mode,length_string
 end
 
 --- Step 2: Encode data
@@ -1306,9 +1316,9 @@ end
 --- 1. Generate 8 matrices with different masks and calculate the penalty
 --- 1. Return qrcode with least penalty
 -- If ec_level or mode is given, use the ones for generating the qrcode. (mode is not implemented yet)
-local function qrcode( str, ec_level, mode )
+local function qrcode( str, ec_level, mode, hint )
 	local arranged_data, version, data_raw, mode, len_bitstring
-	version, ec_level, data_raw, mode, len_bitstring = get_version_eclevel_mode_bistringlength(str,ec_level)
+	version, ec_level, data_raw, mode, len_bitstring = get_version_eclevel_mode_bistringlength(str,ec_level,mode,hint)
 	data_raw = data_raw .. len_bitstring
 	data_raw = data_raw .. encode_data(str,mode)
 	data_raw = add_pad_data(version,ec_level,data_raw)
@@ -1344,5 +1354,5 @@ if testing then
 end
 
 return {
-	qrcode = qrcode,
+	qrcode = qrcode
 }
