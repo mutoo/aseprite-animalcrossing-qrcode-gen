@@ -1,7 +1,7 @@
 --
 -- Animal Crossing QRCode Generator for Aseprite
 --
--- Version: 0.1.0
+-- Version: 0.1.1
 -- Author: Lingjia Liu <gmutoo@gmail.com>
 -- Homepage: https://github.com/mutoo/aseprite-animalcrossing-qrcode-gen
 -- License: MIT
