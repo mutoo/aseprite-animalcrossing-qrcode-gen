@@ -1,7 +1,7 @@
 --
 -- Animal Crossing QRCode Generator for Aseprite
 --
--- Version: 0.1.1
+-- Version: 0.2.0
 -- Author: Lingjia Liu <gmutoo@gmail.com>
 -- Homepage: https://github.com/mutoo/aseprite-animalcrossing-qrcode-gen
 -- License: MIT
@@ -9,6 +9,11 @@
 
 dofile("./lib/palettes.lua")
 dofile("./lib/helper.lua")
+
+local supportedVersion = "1.2.18"
+if app.version < Version(supportedVersion) then
+    return app.alert("Upgrade to " .. supportedVersion .. " or later to use this plugin")
+end
 
 -- try to load settings file for user data
 local settings = {}

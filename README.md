@@ -15,9 +15,17 @@ P.S. the `lib` folder is a necessary part of this script, so please leave it wit
 
 You can also attach a shortcut to this script, more instruction can be found at [this post](https://community.aseprite.org/t/aseprite-scripts-collection/3599).
 
+## Type
+
+Currently, the generator supports the 32 x 32 basic custom design and 64 x 64 pro design.
+
+The 32 x 32 sprite can generates plain easel (paint), knit cap and horned hat.
+
+The 64 x 64 sprite can geneartes shirt and dress with half sleeves, long sleeves or without sleeves.
+
 ## Usage
 
-1. Setup a Sprite with `32px` width and height.
+1. Setup a Sprite with `32px` or `64px` width and height.
 2. Change Color Mode to `Indexed`.
 3. Setup a palette with no more than 16 colors (including transparent).
 4. Enjoy drawing.
@@ -44,9 +52,27 @@ return {
 }
 ```
 
-## Limitation
+## Pattern
 
-Currently, the generator only support the basic 32 x 32 custom design. More design type would be available in future development.
+You may draw anything on 32 x 32 sprite, but for 64 x 64 sprite, you should draw with a certain pattern, so that the plugin could generate the clothing type correctly.
+
+<img width="256" height="256" src="./screenshot/patterns.png"  alt="patterns"/>
+
+For shirt type, it would use the top section and bottom section for sleeves.
+
+For dress type, it would also use the middle section for extra space, since it's longer then shirt.
+
+The Top section and middle section can be divided into left and right parts. The right part is for front side, vice versa.
+
+The bottom section is for sleeves, and the left part is for right arm (sounds odd, but you may think about the model is facing at you), vice versa.
+
+The short sleeves use 50% horizontal space of each sleeve. And for sleeveless type, it just ignores the bottom section. 
+
+## Todo
+
+It's worth to develop a 3D model to preview the design.
+
+## Limitation
 
 The palette is limit to 16 colors with transparent, and when being exported to qrcode, it would be converted to the closest colors in the internal palette (check `lib/palettes.lua` for reference).
 
