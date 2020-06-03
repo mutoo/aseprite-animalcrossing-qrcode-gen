@@ -2,7 +2,7 @@
 
 This is a custom script for generate Animal Crossing QRCode in [Aseprite](http://www.aseprite.org/).
 
-Tested on aseprite v1.2.18.
+Works on aseprite v1.2.18 or later.
 
 ## Install
 
@@ -56,13 +56,13 @@ return {
 
 You may draw anything on 32 x 32 sprite, but for 64 x 64 sprite, you should draw with a certain pattern, so that the plugin could generate the clothing type correctly.
 
-<img width="256" height="256" src="./screenshot/patterns.png"  alt="patterns"/>
+<img width="256" height="256" src="./screenshot/patterns.png" style="image-rendering: pixelated;"  alt="patterns"/>
 
-For shirt type, it would use the top section and bottom section for sleeves.
+For shirt type, it would use the top section with bottom section for sleeves. And it would ignore the middle section.
 
 For dress type, it would also use the middle section for extra space, since it's longer then shirt.
 
-The Top section and middle section can be divided into left and right parts. The right part is for front side, vice versa.
+The top section and the middle section can be divided into left and right parts. The right part is for front side, vice versa.
 
 The bottom section is for sleeves, and the left part is for right arm (sounds odd, but you may think about the model is facing at you), vice versa.
 
