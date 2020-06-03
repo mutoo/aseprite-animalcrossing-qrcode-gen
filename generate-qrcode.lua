@@ -92,6 +92,10 @@ dlg:entry({id = "title", label = "Title", text = settings.title or "Untitled"})
 dlg:entry({id = "author", label = "Author", text = settings.author or "Unknown"})
 dlg:entry({id = "town", label = "Town", text = settings.town or "Aseprite"})
 
+dlg:radio({ id = 'paint', label = 'Type', text = 'Paint', selected = true})
+dlg:radio({ id = 'cap', text = 'Knit Cap'})
+dlg:radio({ id = 'hornedHat', text = 'Horned Hat'})
+
 dlg:separator({text = "Action"})
 
 dlg:button(
@@ -176,11 +180,20 @@ if inputs.generateBtn then
     --  0x03 = Fullsleeve shirt (pro)
     --  0x04 = Halfsleeve shirt (pro)
     --  0x05 = Sleeveless shirt (pro)
-    --  0x06 = Hat with horns
-    --  0x07 = Hat
+    --  0x06 = Horned Hat
+    --  0x07 = Knit Cap
     --  0x08 = Standee (pro)
     --  0x09 = Plain pattern (easel)
-    push(data, 9) -- currently we only support the Plain pattern
+    -- currently we only support the 32x32 type
+    if inputs.paint then
+        push(data, 9) -- Plain pattern (easel)
+    end
+    if inputs.cap then
+        push(data, 7) -- Knit Cap
+    end
+    if inputs.hornedHat then
+        push(data, 6) -- Horned Hat
+    end
     -- 0x 6A - 0x 6B (  2) = Unknown D (seems to always be 0x0000)
     push(data, 0, 0)
     -- 0x 6C - 0x26B (512) = Pattern Data 1 (mandatory)
