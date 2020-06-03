@@ -56,7 +56,7 @@ return {
 
 You may draw anything on 32 x 32 sprite, but for 64 x 64 sprite, you should draw with a certain pattern, so that the plugin could generate the clothing type correctly.
 
-<img width="256" height="256" src="./screenshot/patterns.png" style="image-rendering: pixelated;"  alt="patterns"/>
+<img width="128" height="128" src="./screenshot/patterns.png" alt="patterns"/>
 
 For shirt type, it would use the top section with bottom section for sleeves. And it would ignore the middle section.
 
