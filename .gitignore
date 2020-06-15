@@ -11,6 +11,7 @@ luac.out
 *.os
 *.ko
 *.obj
+!assets/*.obj
 *.elf
 
 # Precompiled Headers
@@ -42,3 +43,6 @@ luac.out
 # IDE
 .idea
 .vs
+
+# tmp
+*.blend1
