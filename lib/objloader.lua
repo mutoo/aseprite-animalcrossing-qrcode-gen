@@ -6,7 +6,7 @@
 -- w/ column-major matrix
 
 local mat = dofile('./matrix.lua')
-local model = dofile('../models/dress-long-sleeve.lua')
+local model = dofile('../models/dress-half-sleeve.lua')
 local vertex = model.vertex
 local angleY = 0
 
@@ -104,14 +104,14 @@ local camToWorldMat = lookAt({ 5, 8, 5 }, { 0, 4, 0 }, { 0, 1, 0 });
 local worldToCamMat = camToWorldMat:invert()
 
 local fov = 60
-local n = 1
-local f = 100
+local n = 0.1
+local f = 20
 local imageAspectRatio = width / height
 local scale = math.tan(fov * 0.5 * math.pi / 180) * n;
 local r = imageAspectRatio * scale
 local l = -r;
 local t = scale
-local b = -t;
+local b = -t
 
 local perspectiveMat = mat({
     { 2 * n / (r - l), 0, (r + l) / (r - l), 0 },
@@ -121,9 +121,12 @@ local perspectiveMat = mat({
 })
 
 function NDCToCanvas(p)
+    if p[1] < -1 or p[2] < -1 or p[3] < -1 or p[1] > 1 or p[2] > 1 or p[3] > 1 then
+        return nil
+    end
     local x = (p[1] + 1) / 2 * width
-    local y = (-p[2] + 1) / 2 * height
-    local z = p[3]
+    local y = (p[2] + 1) / 2 * height
+    local z = -p[3]
     return { x, y, z }
 end
 
@@ -176,9 +179,8 @@ function draw()
         --    print(table.unpack(p0))
         --    print(table.unpack(p1))
         --    print(table.unpack(p2))
-        -- left handed space
-        local w = edge(p0, p1, p2)
-        if w <= 0 then
+        if p0 and p1 and p2 then
+            local area = edge(p0, p1, p2)
             local bbox = getBoundingBox(p0, p1, p2)
             --                drawPoint(frameBuffer, p0, c)
             --                drawPoint(frameBuffer, p1, c)
@@ -189,26 +191,28 @@ function draw()
                     local w0 = edge(p0, p1, p)
                     local w1 = edge(p1, p2, p)
                     local w2 = edge(p2, p0, p)
-                    if w0 <= 0 and w1 <= 0 and w2 <= 0 then
+                    local frontInside = w0 >= 0 and w1 >= 0 and w2 >= 0
+                    local backInside = w0 <= 0 and w1 <= 0 and w2 <= 0
+                    if frontInside or backInside then
+                        w0 = w0 / area
+                        w1 = w1 / area
+                        w2 = w2 / area
                         local oneOverZ = p0[3] * w0 + p1[3] * w1 + p2[3] * w2;
                         local z = 1 / oneOverZ
-                        local idx = row * image.width + col
-                        if z <= zBuffer[idx] then
+                        local idx = row * width + col
+                        if z < zBuffer[idx] then
                             zBuffer[idx] = z
-                            frameBuffer[idx] = c.rgbaPixel
-                        else
-                            --                            frameBuffer[idx] = black.rgbaPixel
+                            frameBuffer[idx] = frontInside and c.rgbaPixel or black.rgbaPixel
                         end
                     end
                 end
             end
         end
-        --    return
     end
 
     for it in image:pixels() do
         local c = it()
-        it(frameBuffer[it.y * image.width + it.x] or white.rgbaPixel)
+        it(frameBuffer[(height - it.y - 1) * image.width + it.x] or white.rgbaPixel)
     end
 
     app.refresh()
