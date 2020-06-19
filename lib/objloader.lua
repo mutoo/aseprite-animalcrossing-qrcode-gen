@@ -8,11 +8,13 @@
 local mat = dofile('./matrix.lua')
 local model = dofile('../models/dress-half-sleeve.lua')
 local vertex = model.vertex
+local uvs = model.uvs
 local angleY = 0
 
 local image = app and app.activeCel.image or { width = 256, height = 256 }
 local black = Color { r = 0, g = 0, b = 0, a = 255 }
 local white = Color { r = 255, g = 255, b = 255, a = 255 }
+local skin = Color { r = 217, g = 160, b = 102, a = 255 }
 
 local width = image.width
 local height = image.height
@@ -100,6 +102,7 @@ function lookAt(eye, target, up)
     }) ^ 'T')
 end
 
+--local camToWorldMat = lookAt({ 10, 10, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
 local camToWorldMat = lookAt({ 5, 8, 5 }, { 0, 4, 0 }, { 0, 1, 0 });
 local worldToCamMat = camToWorldMat:invert()
 
@@ -125,27 +128,38 @@ function NDCToCanvas(p)
         return nil
     end
     local x = (p[1] + 1) / 2 * width
-    local y = (p[2] + 1) / 2 * height
-    local z = -p[3]
+    local y = (1-p[2]) / 2 * height
+    local z = p[3]
     return { x, y, z }
 end
 
 local triangles = {}
+
 --local c = Color { r = math.random(0, 255), g = math.random(0, 255), b = math.random(0, 255), a = 255 }
---table.insert(triangles, {{0, 0, 0}, {5, 0, 0}, {0, 0, 5}, c})
+--table.insert(triangles, { { 0, 0, 0 }, { 0, 0, 5 }, { 5, 0, 0 }, c, { 0, 1 }, { 0, 0 }, { 1, 1 } })
+--table.insert(triangles, { { 0, 0, 5 }, { 5, 0, 5 }, { 5, 0, 0 }, c, { 0, 0 }, { 1, 0 }, { 1, 1 } })
+--c = Color { r = math.random(0, 255), g = math.random(0, 255), b = math.random(0, 255), a = 255 }
+--table.insert(triangles, { { 0, 0, 0 }, { 5, 0, 0 }, { 5, 5, 0 }, c })
+--table.insert(triangles, { { 5, 5, 0 }, { 0, 5, 0 }, { 0, 0, 0 }, c })
+
 --math.randomseed(0)
 --for i = 1, 100 do
 --    local c = Color { r = math.random(0, 255), g = math.random(0, 255), b = math.random(0, 255), a = 255 }
---    local p0 = { math.random(-50, 50), -math.random(-50, 50), math.random(-50, 50) }
---    local p1 = { math.random(-50, 50), -math.random(-50, 50), math.random(-50, 50) }
---    local p2 = { math.random(-50, 50), -math.random(-50, 50), math.random(-50, 50) }
+--    local p0 = { math.random(-5, 5), -math.random(-5, 5), math.random(-5, 5) }
+--    local p1 = { math.random(-5, 5), -math.random(-5, 5), math.random(-5, 5) }
+--    local p2 = { math.random(-5, 5), -math.random(-5, 5), math.random(-5, 5) }
 --    table.insert(triangles, { p0, p1, p2, c})
 --end
 
 for _, f in ipairs(model.faces) do
     local c = Color { r = math.random(0, 255), g = math.random(0, 255), b = math.random(0, 255), a = 255 }
-
-    table.insert(triangles, { vertex[f[1][1]], vertex[f[2][1]], vertex[f[3][1]], c })
+    local p0 = vertex[f[1][1]]
+    local p1 = vertex[f[2][1]]
+    local p2 = vertex[f[3][1]]
+    local uv0 = uvs[f[1][2]]
+    local uv1 = uvs[f[2][2]]
+    local uv2 = uvs[f[3][2]]
+    table.insert(triangles, { p0, p1, p2, c, uv0, uv1, uv2 })
 end
 
 function drawPoint(buffer, p, c)
@@ -170,8 +184,7 @@ function draw()
     local zBuffer = createBuffer(size, f)
 
     for t, triangle in ipairs(triangles) do
-        -- right handed space
-        local t0, t1, t2, c = table.unpack(triangle)
+        local t0, t1, t2, c, uv0, uv1, uv2 = table.unpack(triangle)
         local p0 = NDCToCanvas(transform(mtx, t0))
         local p1 = NDCToCanvas(transform(mtx, t1))
         local p2 = NDCToCanvas(transform(mtx, t2))
@@ -188,21 +201,29 @@ function draw()
             for row = bbox[1], bbox[3] do
                 for col = bbox[4], bbox[2] do
                     local p = { col, row }
-                    local w0 = edge(p0, p1, p)
-                    local w1 = edge(p1, p2, p)
-                    local w2 = edge(p2, p0, p)
-                    local frontInside = w0 >= 0 and w1 >= 0 and w2 >= 0
-                    local backInside = w0 <= 0 and w1 <= 0 and w2 <= 0
-                    if frontInside or backInside then
+                    local w0 = edge(p1, p2, p)
+                    local w1 = edge(p2, p0, p)
+                    local w2 = edge(p0, p1, p)
+                    -- the canvas coordinate is upside down
+                    -- so the edge function is became left-handed
+                    local frontInside = w0 <= 0 and w1 <= 0 and w2 <= 0
+                    local backInside = w0 >= 0 and w1 >= 0 and w2 >= 0
+                    if frontInside or backInside  then
                         w0 = w0 / area
                         w1 = w1 / area
                         w2 = w2 / area
-                        local oneOverZ = p0[3] * w0 + p1[3] * w1 + p2[3] * w2;
-                        local z = 1 / oneOverZ
+                        local z = p0[3] * w0 + p1[3] * w1 + p2[3] * w2;
                         local idx = row * width + col
                         if z < zBuffer[idx] then
                             zBuffer[idx] = z
-                            frameBuffer[idx] = frontInside and c.rgbaPixel or black.rgbaPixel
+                            if uv0 and uv1 and uv2 then
+                                local u = uv0[1] * w0 + uv1[1] * w1 + uv2[1] * w2;
+                                local v = uv0[2] * w0 + uv1[2] * w1 + uv2[2] * w2;
+                                local t = Color({ r = u * 255, g = v * 255, b = 255 })
+                                frameBuffer[idx] = t.rgbaPixel
+                            else
+                                frameBuffer[idx] = frontInside and c.rgbaPixel or skin.rgbaPixel
+                            end
                         end
                     end
                 end
@@ -212,7 +233,7 @@ function draw()
 
     for it in image:pixels() do
         local c = it()
-        it(frameBuffer[(height - it.y - 1) * image.width + it.x] or white.rgbaPixel)
+        it(frameBuffer[it.y * image.width + it.x] or white.rgbaPixel)
     end
 
     app.refresh()
