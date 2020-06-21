@@ -57,16 +57,19 @@ function draw(image)
                         w0 = w0 / area
                         w1 = w1 / area
                         w2 = w2 / area
-                        local z = p0[3] * w0 + p1[3] * w1 + p2[3] * w2;
+                        local op0 = w0 / p0[3]
+                        local op1 = w1 / p1[3]
+                        local op2 = w2 / p2[3]
+                        local z = 1 / (op0 + op1 + op2);
                         local idx = row * width + col
                         if z < zBuffer[idx] then
                             zBuffer[idx] = z
                             if uv0 and uv1 and uv2 then
-                                local u = uv0[1] * w0 + uv1[1] * w1 + uv2[1] * w2;
-                                local v = uv0[2] * w0 + uv1[2] * w1 + uv2[2] * w2;
+                                local u = (uv0[1] * op0 + uv1[1] * op1 + uv2[1] * op2) * z;
+                                local v = (uv0[2] * op0 + uv1[2] * op1 + uv2[2] * op2) * z;
                                 local uv = uvTex:getPixel(u * uvTex.width, (1 - v) * uvTex.height)
                                 local t = Color(uv)
-                                frameBuffer[idx] = t.rgbaPixel
+                                frameBuffer[idx] = frontInside and t.rgbaPixel or black.rgbaPixel
                             else
                                 frameBuffer[idx] = frontInside and c.rgbaPixel or skin.rgbaPixel
                             end
@@ -79,7 +82,11 @@ function draw(image)
 
     for it in image:pixels() do
         local c = it()
-        it(frameBuffer[it.y * image.width + it.x] or white.rgbaPixel)
+        local idx = it.y * image.width + it.x
+        --        local z = zBuffer[idx]
+        --        local gray = Color({ gray = z / f * 255, alpha = 255 })
+        --        it(gray.rgbaPixel)
+        it(frameBuffer[idx] or white.rgbaPixel)
     end
 
     app.refresh()

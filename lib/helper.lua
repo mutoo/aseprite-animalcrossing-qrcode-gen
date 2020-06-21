@@ -140,12 +140,12 @@ function perspective(n, f, t, b, r, l)
     })
 end
 
--- transform vec1x3 with matrix4x4 and return vec1x3
+-- transform vec1x3 with matrix4x4 and return vec1x4
 function transform(matrix, vec)
     local vecMat = mat({ vec[1], vec[2], vec[3], 1 })
     local transformed = matrix * vecMat
     local w = transformed[4][1]
-    return { transformed[1][1] / w, transformed[2][1] / w, transformed[3][1] / w }
+    return { transformed[1][1] / w, transformed[2][1] / w, transformed[3][1] / w, w }
 end
 
 -- normalize a vec1x3
@@ -189,7 +189,7 @@ function NDCToCanvas(p, width, height)
     end
     local x = (p[1] + 1) / 2 * width
     local y = (1 - p[2]) / 2 * height
-    local z = p[3]
+    local z = p[4]
     return { x, y, z }
 end
 
