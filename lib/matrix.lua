@@ -515,7 +515,8 @@ end
 -- on success: returns inverted matrix
 -- on failure: returns nil,'rank of matrix'
 function matrix.invert( m1 )
-    assert(#m1 == #m1[1], "matrix not square")
+    assert(#m1 == #m1[1], "matrix not square:".. debug.traceback() .. '!')
+
     local mtx = matrix.copy( m1 )
     local ident = setmetatable( {},matrix_meta )
     local e = m1[1][1]
