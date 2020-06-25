@@ -11,9 +11,9 @@ Works on aseprite v1.2.18 or later.
 3. Extract the zip in the Scripts folder, and rename it to `animalcrossing`.
 4. Restart Aseprite.
 
-P.S. the `lib` folder is a necessary part of this script, so please leave it with `generate-qrcode.lua`.
+P.S. the `lib` and `models` folders are necessary parts of this script, so please leave it with `generate-qrcode.lua`.
 
-You can also attach a shortcut to this script, more instruction can be found at [this post](https://community.aseprite.org/t/aseprite-scripts-collection/3599).
+You can also attach a shortcut to this script, e.g. `ctrl+g`, more instruction can be found at [this post](https://community.aseprite.org/t/aseprite-scripts-collection/3599).
 
 ## Type
 
@@ -68,9 +68,17 @@ The bottom section is for sleeves, and the left part is for right arm (sounds od
 
 The short sleeves use 50% horizontal space of each sleeve. And for sleeveless type, it just ignores the bottom section. 
 
-## Todo
+## Design Preview
 
-It's worth to develop a 3D model to preview the design.
+Now we have a 3D model to preview the design.
+
+If you are creating a 64px pro design, you can preview the design with selected design type in the other sprite.
+
+Just drag the preview sprite to the left edge of window to dock it beside your design.
+
+You could rotation the model by clicking the arrow buttons, or reload the UV texture when you change your design by clicking the `Reload UV` button.
+
+![3d-design-preivew](./screenshot/models.gif)
 
 ## Limitation
 

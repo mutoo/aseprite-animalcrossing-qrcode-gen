@@ -10,6 +10,10 @@ Jun 3, 2020
 v0.1.1 add knit cap and horned hat type
 v0.2.0 refactor qrencode, add shirt and dress pro type
 
-Jun 13， 2020
+Jun 13, 2020
 
 v0.2.1 fix noise in generated pixel art from luaqrcode#4
+
+Jun 25, 2020
+
+v0.3.0 add model preview for pro design
