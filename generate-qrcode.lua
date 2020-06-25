@@ -128,11 +128,6 @@ if isProDesign then
             previewer(spr, dlg.data)
         end
     })
-
-    dlg:modify({
-        id = "previewBtn",
-        enabled = isIndexMode and isSuitablePalette
-    })
 end
 
 dlg:button({

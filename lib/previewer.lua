@@ -32,14 +32,18 @@ local uvTex = Image({ width = 64, height = 64 })
 
 function draw(image)
     local modelMat = rotateY(modelRotateY)
-    local mtx = perspectiveMat * worldToCamMat * modelMat
+    local viewMat = worldToCamMat * modelMat
+    local projMtx = perspectiveMat * viewMat
     local frameBuffer = createBuffer(size, nil)
     local zBuffer = createBuffer(size, f)
     for t, triangle in ipairs(triangles) do
-        local t0, t1, t2, c, uv0, uv1, uv2 = table.unpack(triangle)
-        local p0 = NDCToCanvas(transform(mtx, t0), width, height)
-        local p1 = NDCToCanvas(transform(mtx, t1), width, height)
-        local p2 = NDCToCanvas(transform(mtx, t2), width, height)
+        local p0, p1, p2, c, uv0, uv1, uv2, n0, n1, n2 = table.unpack(triangle)
+        p0 = NDCToCanvas(transform(projMtx, p0), width, height)
+        p1 = NDCToCanvas(transform(projMtx, p1), width, height)
+        p2 = NDCToCanvas(transform(projMtx, p2), width, height)
+        n0 = transform(viewMat, n0, 0)
+        n1 = transform(viewMat, n1, 0)
+        n2 = transform(viewMat, n2, 0)
         if p0 and p1 and p2 then
             local area = edge(p0, p1, p2)
             local bbox = getBoundingBox(p0, p1, p2, width, height)
@@ -54,22 +58,29 @@ function draw(image)
                     local frontInside = w0 <= 0 and w1 <= 0 and w2 <= 0
                     local backInside = w0 >= 0 and w1 >= 0 and w2 >= 0
                     if frontInside or backInside then
-                        w0 = w0 / area
-                        w1 = w1 / area
-                        w2 = w2 / area
-                        local op0 = w0 / p0[3]
-                        local op1 = w1 / p1[3]
-                        local op2 = w2 / p2[3]
-                        local z = 1 / (op0 + op1 + op2);
+                        w0 = w0 / area / p0[3]
+                        w1 = w1 / area / p1[3]
+                        w2 = w2 / area / p2[3]
+                        local z = 1 / (w0 + w1 + w2);
                         local idx = row * width + col
                         if z < zBuffer[idx] then
                             zBuffer[idx] = z
                             if uv0 and uv1 and uv2 then
-                                local u = (uv0[1] * op0 + uv1[1] * op1 + uv2[1] * op2) * z;
-                                local v = (uv0[2] * op0 + uv1[2] * op1 + uv2[2] * op2) * z;
+                                local u = (uv0[1] * w0 + uv1[1] * w1 + uv2[1] * w2) * z;
+                                local v = (uv0[2] * w0 + uv1[2] * w1 + uv2[2] * w2) * z;
                                 local uv = uvTex:getPixel(u * uvTex.width, (1 - v) * uvTex.height)
-                                local t = Color(uv)
-                                frameBuffer[idx] = frontInside and t.rgbaPixel or black.rgbaPixel
+                                local nx = (n0[1] * w0 + n1[1] * w1 + n2[1] * w2) * z;
+                                local ny = (n0[2] * w0 + n1[2] * w1 + n2[2] * w2) * z;
+                                local nz = (n0[3] * w0 + n1[3] * w1 + n2[3] * w2) * z;
+                                local n = normalize({ nx, ny, nz })
+                                local d = math.max(0, dotProduct(n, { 0, 0, 1 }))
+                                d = math.ceil(math.sqrt(d) * 3) / 3
+                                c = Color(uv)
+                                c.red = c.red * d
+                                c.green = c.green * d
+                                c.blue = c.blue * d
+                                --                                c = Color({ gray = d * 255 })
+                                frameBuffer[idx] = frontInside and c.rgbaPixel or black.rgbaPixel
                             else
                                 frameBuffer[idx] = frontInside and c.rgbaPixel or skin.rgbaPixel
                             end

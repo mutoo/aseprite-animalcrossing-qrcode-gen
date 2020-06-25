@@ -141,11 +141,15 @@ function perspective(n, f, t, b, r, l)
 end
 
 -- transform vec1x3 with matrix4x4 and return vec1x4
-function transform(matrix, vec)
-    local vecMat = mat({ vec[1], vec[2], vec[3], 1 })
+function transform(matrix, vec, w)
+    local vecMat = mat({ vec[1], vec[2], vec[3], w or 1 })
     local transformed = matrix * vecMat
-    local w = transformed[4][1]
-    return { transformed[1][1] / w, transformed[2][1] / w, transformed[3][1] / w, w }
+    w = transformed[4][1]
+    if w == 0 then
+        return { transformed[1][1], transformed[2][1], transformed[3][1], 0 }
+    else
+        return { transformed[1][1] / w, transformed[2][1] / w, transformed[3][1] / w, w }
+    end
 end
 
 -- normalize a vec1x3
@@ -165,6 +169,10 @@ function crossProduct(i, j)
     local y = i[3] * j[1] - i[1] * j[3]
     local z = i[1] * j[2] - i[2] * j[1]
     return { x, y, z }
+end
+
+function dotProduct(i, j)
+    return i[1] * j[1] + i[2] * j[2] + i[3] * j[3]
 end
 
 -- create a camera to world matrix
@@ -197,6 +205,7 @@ function createSenceFromModel(model)
     local triangles = {}
     local vertex = model.vertex
     local uvs = model.uvs
+    local normals = model.normals
     for _, f in ipairs(model.faces) do
         local c = Color { r = math.random(0, 255), g = math.random(0, 255), b = math.random(0, 255), a = 255 }
         local p0 = vertex[f[1][1]]
@@ -205,7 +214,10 @@ function createSenceFromModel(model)
         local uv0 = uvs[f[1][2]]
         local uv1 = uvs[f[2][2]]
         local uv2 = uvs[f[3][2]]
-        table.insert(triangles, { p0, p1, p2, c, uv0, uv1, uv2 })
+        local n0 = normals[f[1][3]]
+        local n1 = normals[f[2][3]]
+        local n2 = normals[f[3][3]]
+        table.insert(triangles, { p0, p1, p2, c, uv0, uv1, uv2, n0, n1, n2 })
     end
     return triangles
 end
