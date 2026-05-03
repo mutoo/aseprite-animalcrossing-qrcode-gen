@@ -1,5 +1,6 @@
-local qrencode = dofile("./qrencode.lua")
-local mat = dofile('./matrix.lua')
+local loadScript = rawget(_G, "script_dofile")
+local qrencode = loadScript and loadScript("lib/qrencode.lua") or dofile("./qrencode.lua")
+local mat = loadScript and loadScript("lib/matrix.lua") or dofile("./matrix.lua")
 
 -- insert multi values into table
 function push(t, ...)

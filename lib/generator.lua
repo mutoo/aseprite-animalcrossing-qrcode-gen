@@ -1,27 +1,56 @@
 return function(spr, inputs)
-    -- merge layers, this will be undo later
-    app.command.FlattenLayers({ visibleOnly = true })
+    local compat = asepriteCompat or script_dofile("lib/aseprite-compat.lua")
+    local frameNumber = compat.getActiveFrameNumber()
+
+    local function readMergedPixels()
+        local duplicate = Sprite(spr)
+        local ok, pixelsOrError = pcall(function()
+            compat.setActiveSprite(duplicate)
+            compat.setActiveFrame(frameNumber)
+            compat.flattenVisibleLayers()
+
+            local cel = compat.getActiveCel()
+            assert(cel, "Unable to read the flattened sprite")
+
+            local img = cel.image
+            local pos = cel.position
+            local pixels = {}
+            local alpha = spr.transparentColor
+            local w = spr.width
+            local h = spr.height
+            local c = w * h - 1
+
+            -- reset the pixels array
+            for i = 0, c do
+                pixels[i] = 0x0f
+            end
+
+            -- update pixels array with image data
+            for p in img:pixels() do
+                local color = p()
+                local i = (pos.y + p.y) * w + (pos.x + p.x)
+                pixels[i] = shiftWithAlpha(color, alpha)
+            end
+
+            return pixels
+        end)
+
+        pcall(function()
+            duplicate:close()
+        end)
+        compat.setActiveSprite(spr)
+        compat.setActiveFrame(frameNumber)
+
+        if not ok then
+            error(pixelsOrError, 0)
+        end
+
+        return pixelsOrError
+    end
+
     -- analytic image
-    local cel = app.activeCel
-    local img = cel.image
-    local pos = cel.position
-    local pixels = {}
+    local pixels = readMergedPixels()
     local alpha = spr.transparentColor
-    local w = spr.width
-    local h = spr.height
-    local c = w * h - 1
-    -- reset the pixels array
-    for i = 0, c do
-        pixels[i] = 0x0f
-    end
-    -- update pixels array with image data
-    for p in img:pixels() do
-        local c = p()
-        local i = (pos.y + p.y) * w + (pos.x + p.x)
-        pixels[i] = shiftWithAlpha(c, alpha)
-    end
-    -- revert the flatten action
-    app.undo()
 
     -- compose qr data
     local data = {}
@@ -42,7 +71,8 @@ return function(spr, inputs)
     -- -- 0x 56 - 0x 57 (  2) = Unknown A (values are usually random - changing seems to have no effect)
     push(data, 25, 49) -- 0x3119
     -- -- 0x 58 - 0x 66 ( 15) = Color code indexes
-    local palette = spr.palettes[1]
+    local palette = compat.getSpritePalette(spr, frameNumber)
+    assert(palette, "No palette in active sprite")
     local paletteIdxes = {}
     for i = 0, #palette - 1 do
         if i ~= alpha then
@@ -117,9 +147,11 @@ return function(spr, inputs)
     local qrSqrWidth = qrWidth + qrPadding * 2
     local qrSqrHeight = qrWidth * numOfQRCodes + qrPadding * (numOfQRCodes + 1)
     local qrSpr = Sprite(qrSqrWidth, qrSqrHeight, ColorMode.RGB)
-    local qrPalette = qrSpr.palettes[1]
-    qrPalette:resize(1) -- clear the palette
-    local qrCel = app.activeCel
+    local qrPalette = compat.getSpritePalette(qrSpr)
+    if qrPalette then
+        qrPalette:resize(1) -- clear the palette
+    end
+    local qrCel = qrSpr.cels[1] or compat.getActiveCel()
     local qrImg = qrCel.image
     local black = Color({ r = 0, g = 0, b = 0, a = 255 })
     local white = Color({ r = 255, g = 255, b = 255, a = 255 })
@@ -148,5 +180,5 @@ return function(spr, inputs)
     end
 
     -- done
-    app.refresh()
+    compat.refresh()
 end

@@ -2,7 +2,7 @@
 
 This is a custom script for generate Animal Crossing QRCode in [Aseprite](http://www.aseprite.org/).
 
-Works on aseprite v1.2.18 or later.
+Works on Aseprite v1.2.18 or later. Tested with Aseprite v1.3.17.2.
 
 ## Install
 
@@ -36,6 +36,8 @@ The 64 x 64 sprite can geneartes shirt and dress with half sleeves, long sleeves
 
 ![screenshot-1](./screenshot/qrcode-1.png)
 ![screenshot-2](./screenshot/qrcode-2.png)
+
+When your design contains large transparent areas, the generated QRCode may look visually heavier on one side or show large checkerboard-like regions. This is expected: transparent pixels are encoded as part of the Animal Crossing pattern data, and the QR mask can make repeated transparent data look more regular. It does not mean the QRCode is misaligned.
 
 ### User Preference
 
@@ -77,6 +79,8 @@ If you are creating a 64px pro design, you can preview the design with selected 
 Just drag the preview sprite to the left edge of window to dock it beside your design.
 
 You could rotation the model by clicking the arrow buttons, or reload the UV texture when you change your design by clicking the `Reload UV` button.
+
+The preview uses Aseprite's current frame when loading your design as a UV texture.
 
 ![3d-design-preivew](./screenshot/models.gif)
 

@@ -17,3 +17,7 @@ v0.2.1 fix noise in generated pixel art from luaqrcode#4
 Jun 25, 2020
 
 v0.3.0 add model preview for pro design
+
+May 3, 2026
+
+v0.3.1 support Aseprite v1.3.17.2 scripting API changes

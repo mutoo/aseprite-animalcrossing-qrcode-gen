@@ -1,49 +1,62 @@
 --
 -- Animal Crossing QRCode Generator for Aseprite
 --
--- Version: 0.3.0
+-- Version: 0.3.1
 -- Author: Lingjia Liu <gmutoo@gmail.com>
 -- Homepage: https://github.com/mutoo/aseprite-animalcrossing-qrcode-gen
 -- License: MIT
 --
 
-dofile("./lib/palettes.lua")
-dofile("./lib/helper.lua")
+local source = debug.getinfo(1, "S").source
+local scriptPath = string.sub(source, 1, 1) == "@" and string.sub(source, 2) or source
+local scriptDir = string.match(scriptPath, "^(.*[/\\])") or "./"
 
-local generator = dofile("./lib/generator.lua")
-local previewer = dofile("./lib/previewer.lua")
+function script_dofile(path)
+    return dofile(scriptDir .. path)
+end
+
+local compat = script_dofile("lib/aseprite-compat.lua")
+
+script_dofile("lib/palettes.lua")
+script_dofile("lib/helper.lua")
+
+local generator = script_dofile("lib/generator.lua")
+local previewer = script_dofile("lib/previewer.lua")
 
 local supportedVersion = "1.2.18"
 if app.version < Version(supportedVersion) then
-    return app.alert("Upgrade to " .. supportedVersion .. " or later to use this plugin")
+    return compat.alert("Upgrade to " .. supportedVersion .. " or later to use this plugin")
 end
 
 -- try to load settings file for user data
 local settings = {}
 pcall(function()
-    settings = dofile('./settings.lua')
+    settings = script_dofile("settings.lua")
 end)
 
 -- load active sprite
-local spr = app.activeSprite
+local spr = compat.getActiveSprite()
 if not spr then
-    return app.alert("No active sprite")
+    return compat.alert("No active sprite")
 end
 
 -- load active cel
-local cel = app.activeCel
+local cel = compat.getActiveCel()
 if not cel then
-    return app.alert("No active cel or content in current sprite")
+    return compat.alert("No active cel or content in current sprite")
 end
 
 local isIndexMode = spr.colorMode == ColorMode.INDEXED
-local palette = spr.palettes[1]
+local palette = compat.getSpritePalette(spr, compat.getActiveFrameNumber())
 local isBasicDesign = spr.width == 32 and spr.height == 32
 local isProDesign = spr.width == 64 and spr.height == 64
 local isSupportedDesign = isBasicDesign or isProDesign
-local isSuitablePalette = #palette <= 16
+local isSuitablePalette = palette and #palette <= 16
 
 local dlg = Dialog("Animal Crossing QRCode Generator")
+if not dlg then
+    return compat.alert("The Animal Crossing QRCode Generator needs the Aseprite UI")
+end
 
 dlg:separator({ text = "Check List" })
 

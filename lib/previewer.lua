@@ -7,6 +7,8 @@
 local width = 256
 local height = 256
 local size = width * height
+local compat = asepriteCompat or script_dofile("lib/aseprite-compat.lua")
+local pc = app.pixelColor
 
 local black = Color { r = 0, g = 0, b = 0, a = 255 }
 local white = Color { r = 255, g = 255, b = 255, a = 255 }
@@ -28,7 +30,17 @@ local perspectiveMat = perspective(n, f, t, b, r, l)
 
 local triangles = {}
 local modelRotateY = 0
-local uvTex = Image({ width = 64, height = 64 })
+local uvTex = Image(64, 64, ColorMode.RGB)
+
+local function clamp(v, min, max)
+    if v < min then
+        return min
+    end
+    if v > max then
+        return max
+    end
+    return v
+end
 
 function draw(image)
     local modelMat = rotateY(modelRotateY)
@@ -68,14 +80,21 @@ function draw(image)
                             if uv0 and uv1 and uv2 then
                                 local u = (uv0[1] * w0 + uv1[1] * w1 + uv2[1] * w2) * z;
                                 local v = (uv0[2] * w0 + uv1[2] * w1 + uv2[2] * w2) * z;
-                                local uv = uvTex:getPixel(u * uvTex.width, (1 - v) * uvTex.height)
+                                local uvX = clamp(math.floor(u * uvTex.width), 0, uvTex.width - 1)
+                                local uvY = clamp(math.floor((1 - v) * uvTex.height), 0, uvTex.height - 1)
+                                local uv = uvTex:getPixel(uvX, uvY)
                                 local nx = (n0[1] * w0 + n1[1] * w1 + n2[1] * w2) * z;
                                 local ny = (n0[2] * w0 + n1[2] * w1 + n2[2] * w2) * z;
                                 local nz = (n0[3] * w0 + n1[3] * w1 + n2[3] * w2) * z;
                                 local n = normalize({ nx, ny, nz })
                                 local d = math.max(0, dotProduct(n, { 0, 0, 1 }))
                                 d = math.ceil(math.sqrt(d) * 3) / 3
-                                c = Color(uv)
+                                c = Color {
+                                    r = pc.rgbaR(uv),
+                                    g = pc.rgbaG(uv),
+                                    b = pc.rgbaB(uv),
+                                    a = pc.rgbaA(uv)
+                                }
                                 c.red = c.red * d
                                 c.green = c.green * d
                                 c.blue = c.blue * d
@@ -100,7 +119,7 @@ function draw(image)
         it(frameBuffer[idx] or white.rgbaPixel)
     end
 
-    app.refresh()
+    compat.refresh()
 end
 
 local models = {
@@ -112,22 +131,26 @@ local models = {
     'shirt-no-sleeve',
 }
 
-function reloadUV(spr, renderSpr)
-    local current = app.activeSprite
-    uvTex:drawSprite(spr)
-    app.activeSprite = renderSpr
-    app.refresh()
+function reloadUV(spr, renderSpr, frameNumber)
+    uvTex:clear(white.rgbaPixel)
+    uvTex:drawSprite(spr, frameNumber)
+    compat.setActiveSprite(renderSpr)
+    compat.refresh()
 end
 
 return function(spr, inputs)
     local type = getTypeFromInputs(inputs)
+    local frameNumber = compat.getActiveFrameNumber()
 
     -- load model
-    local model = dofile('./models/' .. models[type] .. '.lua')
+    local model = script_dofile("models/" .. models[type] .. ".lua")
     triangles = createSenceFromModel(model)
 
     local renderSpr = Sprite(width, height, ColorMode.RGB)
-    renderSpr:setPalette(spr.palettes[1])
+    local palette = compat.getSpritePalette(spr, frameNumber)
+    if palette then
+        renderSpr:setPalette(palette)
+    end
     local renderCel = renderSpr.cels[1]
     local renderImage = renderCel.image
 
@@ -144,6 +167,11 @@ return function(spr, inputs)
             renderSpr:close()
         end
     })
+    if not dlg then
+        reloadUV(spr, renderSpr, frameNumber)
+        draw(renderImage)
+        return renderSpr
+    end
     dlg:button {
         text = "<<",
         onclick = rotateAndDraw(-math.pi / 4)
@@ -163,7 +191,7 @@ return function(spr, inputs)
     dlg:button {
         text = "Reload UV",
         onclick = function()
-            reloadUV(spr, renderSpr)
+            reloadUV(spr, renderSpr, frameNumber)
             draw(renderImage)
         end
     }
@@ -174,6 +202,6 @@ return function(spr, inputs)
         end
     }
     dlg:show({ wait = false })
-    reloadUV(spr, renderSpr)
+    reloadUV(spr, renderSpr, frameNumber)
     draw(renderImage)
 end
